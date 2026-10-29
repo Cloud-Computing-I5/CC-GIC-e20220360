@@ -1,8 +1,7 @@
 # Cloud Lab 2 — Load Balancer and Auto Scaling
 
-- **Student name:** [Your Name]
+- **Student name:** LOU Chumdararith
 - **Student ID:** e20220360
-- **Learner Lab user name:** [Your Learner Lab user name]
 - **Date completed:** 2026-10-29
 
 ---
@@ -98,15 +97,3 @@ About how many minutes passed between stopping `httpd` and the new instance beco
 5. **The instances' security group allows HTTP from anywhere. How could you change it so that the instances accept HTTP only from the load balancer?**
    Change the HTTP inbound rule's source from Anywhere-IPv4 (`0.0.0.0/0`) to the load balancer's security group (`LoadBalancerSecurityGroup`). That restricts HTTP access to the load balancer only.
 
-## Problems and how I solved them (optional)
-
-## AI note (optional)
-
-One suggestion an AI tool gave you and how you checked it.
-
-## Clean up
-
-- [x] `MyAutoScalingGroup` deleted and its instances terminated.
-- [x] `AutoScalingLaunchTemplate` deleted.
-- [x] `MyLoadBalancer` and `LoadBalancerTargetGroup` deleted.
-- [x] Both security groups deleted.
