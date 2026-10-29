@@ -1,6 +1,6 @@
 # Cloud Lab 1 — Amazon EC2
 **Course:** Cloud Computing  
-**Student Name:** [Your Name]  
+**Student Name:** LOU Chumdararith 
 **AWS Region:** us-east-1 (N. Virginia)  
 
 ---
