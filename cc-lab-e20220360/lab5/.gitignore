@@ -1,0 +1,8 @@
+*.pem
+*.pdf
+.env
+.venv/
+node_modules/
+credentials
+GEMINI.md
+lab5-instruction.md
