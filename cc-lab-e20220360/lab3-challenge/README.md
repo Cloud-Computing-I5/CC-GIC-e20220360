@@ -26,7 +26,7 @@
 
 My policy is in [bucket-policy.json](bucket-policy.json). Explain which line limits public access to the `public/` folder:
 
-- Line 9 (`"Resource": "arn:aws:s3:::clab-datastore-667191010432/public/*"`) restricts the `s3:GetObject` allow statement strictly to keys beginning with the `public/` prefix. Because S3 denies access by default to everything not explicitly allowed, objects at the bucket root (such as `private.txt`) or under any other prefix return `403 AccessDenied`.
+- The `"Resource": "arn:aws:s3:::clab-datastore-667191010432/public/*"` line limits public read access to only files inside `public/`. Anything outside that folder (like `private.txt` at the root) stays blocked.
 
 ## 4. Versioning
 
@@ -40,14 +40,14 @@ My policy is in [bucket-policy.json](bucket-policy.json). Explain which line lim
 
 ## Questions
 
-1. **You turned off parts of Block Public Access for this bucket. Why was that needed, and why is it still safe for the objects outside `public/`?**
-   - Disabling `BlockPublicPolicy` and `RestrictPublicBuckets` was required so S3 would allow attaching and enforcing a bucket policy with `Principal: "*"` for public read access, while `BlockPublicAcls` and `IgnorePublicAcls` remained enabled to prevent accidental public ACL grants. Objects outside `public/` stay safe because S3 uses implicit deny by default and our bucket policy grants `s3:GetObject` exclusively to `arn:aws:s3:::clab-datastore-667191010432/public/*`, as confirmed by `private.txt` returning `403 AccessDenied`.
+1. You turned off parts of **Block Public Access** for this bucket. Why was that needed, and why is it still safe for the objects outside `public/`?
+   - I had to turn off the bucket policy blocks (`BlockPublicPolicy` and `RestrictPublicBuckets`) so S3 would let me attach a public bucket policy. Everything outside `public/` is still safe because S3 blocks access by default and the policy only allows `s3:GetObject` on `public/*`. I tested opening `private.txt` in the browser and got `AccessDenied`.
 
-2. **What is a noncurrent version? Give an example from your own test.**
-   - When Bucket Versioning is enabled and an existing object key is overwritten (or deleted with a delete marker), S3 keeps the previous version of that object as a **noncurrent version** while the newly uploaded object becomes the **current (latest)** version. In my test, after uploading `public/index.html` (v1, Version ID `5Z_FEQUmZiMiM5O5WUlpYamvNaPJVoIl`) and then uploading an updated `public/index.html` (v2, Version ID `bFs8pDvAvBZPSd30BLttkYP5acUjmJ3P`), v1 became a noncurrent version (`IsLatest: False`) while v2 became the current version (`IsLatest: True`).
+2. What is a **noncurrent version**? Give an example from your own test.
+   - When versioning is turned on and you upload a new file with the same name, the old copy isn't deleted. It becomes a noncurrent version while the new upload becomes the current version. In my test, I uploaded `public/index.html` (v1) and then uploaded an updated `public/index.html` (v2), so v1 became the noncurrent version.
 
-3. **Why move noncurrent versions to S3 Standard-IA instead of deleting them?**
-   - Moving noncurrent versions to **S3 Standard-IA (Infrequent Access)** after 30 days significantly lowers storage costs while retaining older versions for rollback, auditing, or accidental-overwrite recovery, instead of permanently losing history by deleting them immediately.
+3. Why move noncurrent versions to S3 Standard-IA instead of deleting them?
+   - Moving old versions to S3 Standard-IA costs less than keeping them in Standard, while still keeping them around in case we ever need to roll back or check an older version of a page.
 
 ## Clean up
 

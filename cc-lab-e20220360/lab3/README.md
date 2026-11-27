@@ -35,7 +35,7 @@
 
 Which device name did your volume get (`xvdf`, `nvme1n1`, ...)?
 
-- **`nvme1n1`** (Nitro-based `t3.medium` instances expose attached EBS volumes as NVMe block devices; the root volume is `nvme0n1` and the attached `/dev/sdf` volume appears as `nvme1n1`).
+- `nvme1n1` (on `t3.medium`, the root disk is `nvme0n1` and the extra attached disk shows up as `nvme1n1`).
 
 ### File read on instance-2
 
@@ -61,22 +61,22 @@ Which device name did your volume get (`xvdf`, `nvme1n1`, ...)?
 
 ## Questions
 
-1. **After you turned on static website hosting, the endpoint first answered 403 Forbidden. Why, and what changed after you added the bucket policy?**
-   - S3 buckets and objects are private by default. Turning off **Block Public Access** only removes the safety guardrail that blocks public policies; it does not grant read permission by itself. Adding the bucket policy explicitly allowed `s3:GetObject` for `Principal: "*"` on `arn:aws:s3:::static-web-bucket-667191010432/*`, enabling anonymous visitors to read `index.html` and returning HTTP 200.
+1. After you turned on static website hosting, the endpoint first answered **403 Forbidden**. Why, and what changed after you added the bucket policy?
+   - By default S3 buckets are private. Turning off Block Public Access doesn't make the files public by itself, it just lets us add a public policy. Once I added the bucket policy allowing `s3:GetObject` for everyone (`*`), anyone could load `index.html` and the site opened normally.
 
-2. **`testfile.txt` was still there after you moved Backup Volume to `instance-2`. What would have happened to a file saved on `instance-1`'s root volume after terminating `instance-1`?**
-   - It would have been permanently deleted. By default, an EC2 instance's root EBS volume has `DeleteOnTermination` enabled, so terminating `instance-1` deletes its root volume and all data stored on it. In contrast, an additional EBS volume persists independently of any single instance.
+2. `testfile.txt` was still there after you moved **Backup Volume** to `instance-2`. What would have happened to a file saved on `instance-1`'s **root** volume after terminating `instance-1`?
+   - It would be gone. The root volume is deleted automatically when you terminate the EC2 instance, unlike the extra EBS volume which stays around on its own.
 
-3. **Why did you run `mkfs` on `instance-1` but not on `instance-2`?**
-   - A brand-new EBS volume is raw, unformatted block storage, so `mkfs -t ext4` was needed once on `instance-1` to create a file system before mounting it. On `instance-2`, the volume already contained the `ext4` file system and `testfile.txt`; running `mkfs` again would have reformatted the disk and erased all existing data.
+3. Why did you run `mkfs` on `instance-1` but not on `instance-2`?
+   - A brand new EBS volume is just raw empty space with no file system yet, so I had to format it with `mkfs` on `instance-1` before mounting it. On `instance-2` it was already formatted and had `testfile.txt` on it, so running `mkfs` again would have wiped everything on the disk.
 
-4. **Why could `instance-1` and `instance-3` use the EFS file system at the same time, when an EBS volume had to be detached first? Why did they have to be in the subnets of the mount targets?**
-   - Amazon EFS is a managed network file system (NFS) designed for concurrent multi-instance access across Availability Zones with built-in file locking and consistency, whereas a standard EBS volume is a single-AZ block device that can only be attached to one EC2 instance at a time (and must be detached before reattaching). Each EC2 instance connects to EFS through an ENI mount target inside its own Availability Zone's subnet, so placing instances in subnets with mount targets ensures low-latency in-AZ NFS connectivity allowed by `efs-sg` (TCP port 2049).
+4. Why could `instance-1` and `instance-3` use the EFS file system at the same time, when an EBS volume had to be detached first? Why did they have to be in the subnets of the mount targets?
+   - EFS works over the network using NFS, so multiple EC2 instances can mount and share it at the same time. An EBS volume works like a regular hard drive and can only attach to one instance at a time. The instances had to be in subnets with mount targets because each instance connects to EFS through the mount target in its own AZ.
 
-5. **For each need, choose S3, EBS or EFS and give one reason:**
-   - **(a) A website's images:** **Amazon S3** — ideal for storing and serving static web assets over HTTP/HTTPS with high durability, virtually unlimited scalability, and low cost.
-   - **(b) The disk of a database server:** **Amazon EBS** — provides low-latency, high-IOPS block storage attached directly to a single EC2 database server.
-   - **(c) A folder shared by several web servers:** **Amazon EFS** — provides a POSIX-compliant shared network file system that multiple EC2 instances across Availability Zones can mount and read/write concurrently.
+5. For each need, choose S3, EBS or EFS and give one reason: (a) a website's images, (b) the disk of a database server, (c) a folder shared by several web servers.
+   - (a) **S3** because it's cheap, scales easily, and can serve static files like images directly over the web.
+   - (b) **EBS** because a database needs fast block storage attached straight to the server.
+   - (c) **EFS** because multiple servers can mount the same folder and read/write files at the same time.
 
 ## Clean up
 
