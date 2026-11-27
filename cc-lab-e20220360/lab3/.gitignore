@@ -1,0 +1,16 @@
+*.pem
+*.pdf
+.env
+.venv/
+node_modules/
+credentials
+.DS_Store
+GEMINI.md
+lab image/
+challenge image/
+figures/
+lab03
+lab3-instruction.md
+lab3-challenge.md
+challenge-README.md
+report template.md
